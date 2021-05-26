@@ -9,5 +9,6 @@
 #define SPRITE_H_
 
 extern const unsigned short dog[76800];
+extern const unsigned short mario[3100];
 
 #endif /* SPRITE_H_ */
