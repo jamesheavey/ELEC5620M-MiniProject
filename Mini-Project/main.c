@@ -29,7 +29,7 @@ const unsigned int SCALER = 200 - 1;
 const unsigned int PERIOD = 225000000/(SCALER+1);		// 60 Hz
 const unsigned int NUM_TASKS = 5;
 const unsigned int NUM_MISSILES = 10;
-const unsigned int NUM_METEORS = 10;
+const unsigned int NUM_METEORS = 5;
 const unsigned int COOLDOWN_TIMER = 100;
 
 typedef void (*TaskFunction) ( void );
@@ -43,7 +43,8 @@ int thruster_index = 0;
 int bg_index;
 
 int meteors[NUM_METEORS][2];
-int meteor_timer[NUM_METEORS];
+int meteor_timer_start[NUM_METEORS];
+int meteor_timer_elapsed[NUM_METEORS];
 
 int meteor_index = 0;
 
@@ -73,8 +74,9 @@ void init()
 
 	for (i = 0; i < NUM_METEORS; i++){
 		meteors[i][0] = rand() % (320 - METEOR_SIZE);
-		meteors[i][1] = -1 * (rand() % 500) - METEOR_SIZE;
-		meteor_timer[i] = rand() % 5;
+		meteors[i][1] = -1 * (rand() % 1000) - METEOR_SIZE;
+		meteor_timer_start[i] = rand() % 5;
+		meteor_timer_elapsed[i] = meteor_timer_start[i];
 	}
 
 	shipX = (SCREEN_WIDTH - PLAYER_WIDTH)/2, shipY =  SCREEN_HEIGHT - PLAYER_HEIGHT - 10;
@@ -148,22 +150,24 @@ void move_meteors()
 	int i;
 
 	for (i = 0; i < NUM_METEORS; i++){
-		meteor_timer[i] = meteor_timer[i] - 1;
+		meteor_timer_elapsed[i] = meteor_timer_elapsed[i] - 1;
 
-		if (meteor_timer[i] <= 0) {
-			meteor_timer[i] = rand() % 5;
+		if (meteor_timer_elapsed[i] <= 0) {
+			meteor_timer_elapsed[i] = meteor_timer_start[i];
 			meteors[i][1] = meteors[i][1] + 1;
+
+			if((meteors[i][1] <= SCREEN_HEIGHT) && (meteors[i][1] >= -METEOR_SIZE)) {
+				VGA_drawBGSprite(background[bg_index], meteor[(meteor_index + i)%8], meteors[i][0], meteors[i][1], METEOR_SIZE, METEOR_SIZE);
+			}
 		}
 
 		if(meteors[i][1] >= SCREEN_HEIGHT){
 			meteors[i][0] = rand() % (320 - METEOR_SIZE);
-			meteors[i][1] = -1 * (rand() % 500) - METEOR_SIZE;
+			meteors[i][1] = -1 * (rand() % 1000) - METEOR_SIZE;
+			meteor_timer_start[i] = rand() % 5;
+			meteor_timer_elapsed[i] = meteor_timer_start[i];
 
 			// lose life
-		}
-
-		if((meteors[i][1] <= SCREEN_HEIGHT + METEOR_SIZE) && (meteors[i][1] >= -METEOR_SIZE)) {
-			VGA_drawBGSprite(background[bg_index], meteor[(meteor_index + i)%8], meteors[i][0], meteors[i][1], METEOR_SIZE, METEOR_SIZE);
 		}
 	}
 }
@@ -250,7 +254,7 @@ int main ()
 	int i;
 
 	unsigned int lastIncrTime[NUM_TASKS] = {0};												// all timers start incrementing immediately
-	const unsigned int incrPeriod[NUM_TASKS] = {PERIOD/150, PERIOD/500, PERIOD/500, PERIOD/10, PERIOD/300}; 		// set the increment period for all timer units
+	const unsigned int incrPeriod[NUM_TASKS] = {PERIOD/200, PERIOD/500, PERIOD/500, PERIOD/10, PERIOD/100}; 		// set the increment period for all timer units
 	TaskFunction taskFunctions[NUM_TASKS] = {&move_ship, &shoot_missile, &move_missiles, &animation, &move_meteors};		// define task function struct to call increment functions when required
 
 	init();
