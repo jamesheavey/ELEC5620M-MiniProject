@@ -20,13 +20,18 @@
 							<targetPlatform id="com.arm.eclipse.build.config.baremetal.exe.debug.1350495956..1277554188" name=""/>
 							<builder buildPath="${workspace_loc:/Mini-Project}/Debug" id="com.arm.toolchain.baremetal.builder.101557640" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="com.arm.toolchain.baremetal.builder"/>
 							<tool id="com.arm.tool.c.compiler.baremetal.exe.debug.811237359" name="ARM C Compiler 5" superClass="com.arm.tool.c.compiler.baremetal.exe.debug">
-								<option defaultValue="com.arm.tool.c.compiler.option.optlevel.min" id="com.arm.tool.c.compiler.baremetal.exe.debug.base.option.opt.1683756593" name="Optimization level" superClass="com.arm.tool.c.compiler.baremetal.exe.debug.base.option.opt" useByScannerDiscovery="true" valueType="enumerated"/>
+								<option defaultValue="com.arm.tool.c.compiler.option.optlevel.min" id="com.arm.tool.c.compiler.baremetal.exe.debug.base.option.opt.1683756593" name="Optimization level" superClass="com.arm.tool.c.compiler.baremetal.exe.debug.base.option.opt" useByScannerDiscovery="true" value="com.arm.tool.c.compiler.option.optlevel.max" valueType="enumerated"/>
 								<option id="com.arm.tool.c.compiler.option.targetcpu.490300931" name="Target CPU (--cpu)" superClass="com.arm.tool.c.compiler.option.targetcpu" useByScannerDiscovery="true" value="Cortex-A9.no_neon.no_vfp" valueType="string"/>
 								<option id="com.arm.tool.c.compiler.option.fppcs.2123343972" name="Floating-point PCS (--apcs)" superClass="com.arm.tool.c.compiler.option.fppcs" useByScannerDiscovery="true" value="com.arm.tool.c.compiler.option.fppcs.auto" valueType="enumerated"/>
 								<option id="com.arm.tool.c.compiler.option.inst.2012081683" name="Instruction set" superClass="com.arm.tool.c.compiler.option.inst" useByScannerDiscovery="true" value="com.arm.tool.c.compiler.option.inst.arm" valueType="enumerated"/>
 								<option id="com.arm.tool.c.compiler.option.incpath.707919716" name="Include path (-I)" superClass="com.arm.tool.c.compiler.option.incpath" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ELEC5620M-Student-jamesheavey}&quot;"/>
 								</option>
+								<option id="com.arm.tool.c.compiler.option.defmac.799518297" name="Define macro (-D)" superClass="com.arm.tool.c.compiler.option.defmac" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="HARDWARE_OPTIMISED"/>
+								</option>
+								<option id="com.arm.tool.c.compiler.option.optfor.57619501" superClass="com.arm.tool.c.compiler.option.optfor" value="com.arm.tool.c.compiler.option.optfor.time" valueType="enumerated"/>
+								<option id="com.arm.tool.c.compiler.option.loopopt.819965097" superClass="com.arm.tool.c.compiler.option.loopopt" value="com.arm.tool.c.compiler.option.loopopt.high" valueType="enumerated"/>
 								<inputType id="com.arm.tool.c.compiler.input.259700843" superClass="com.arm.tool.c.compiler.input"/>
 								<inputType id="com.arm.tool.cpp.compiler.input.1467675277" superClass="com.arm.tool.cpp.compiler.input"/>
 							</tool>

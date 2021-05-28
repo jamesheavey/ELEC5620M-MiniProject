@@ -14,6 +14,7 @@
 #include "HPS_usleep/HPS_usleep.h"
 #include "DE1SoC_VGA/DE1SoC_VGA.h"
 #include "DE1SoC_PS2/DE1SoC_PS2.h"
+#include "DE1SoC_SevenSeg/DE1SoC_SevenSeg.h"
 #include "HPS_PrivateTimer/HPS_PrivateTimer.h"
 
 #include "sprites/sprite.h"
@@ -28,14 +29,14 @@ const unsigned int SCALER = 200 - 1;
 const unsigned int PERIOD = 225000000/(SCALER+1);		// 60 Hz
 const unsigned int NUM_TASKS = 3;
 const unsigned int NUM_MISSILES = 10;
-const unsigned int COOLDOWN_TIMER = 10;
+const unsigned int COOLDOWN_TIMER = 100;
 
 typedef void (*TaskFunction) ( void );
 
 bool left, right, up, down, shoot;
 
 int shipX, shipY;
-int ship_index = 0;
+int ship_index;
 
 int bg_index;
 
@@ -66,21 +67,20 @@ void init()
 
 	srand(time(NULL));
 	bg_index = (rand()) % 9;
+	ship_index = (rand()) % 4;
 }
 
 void move_ship()
 {
 	if (left && shipX > 0) {
-		left = 0;
 		shipX = shipX - 1;
 	} else if (right && shipX < SCREEN_WIDTH - PLAYER_WIDTH) {
-		right = 0;
 		shipX = shipX + 1;
-	} else if (up && shipY > 0) {
-		up = 0;
+	}
+
+	if (up && shipY > 0) {
 		shipY = shipY - 1;
 	} else if (down && shipY < SCREEN_HEIGHT - PLAYER_HEIGHT) {
-		down = 0;
 		shipY = shipY + 1;
 	}
 
@@ -136,19 +136,40 @@ void PS2_input()
 {
 	unsigned int scancode = PS2_readInput();
 
-	if (scancode == 0xE06B) {
-		left 	= 1;
-	} else if (scancode == 0xE074) {
-		right 	= 1;
-	} else if (scancode == 0xE075) {
-		up 		= 1;
-	} else if (scancode == 0xE072) {
-		down 	= 1;
-	} else if (scancode == 0x29F0) {
-		shoot	= 1;
-	} else {
-		left = 0, right = 0, up = 0, down = 0, shoot = 0;
+	if (scancode == 0xF06B) {
+		left 	= 0;
+	} else if (scancode == 0xE06B) {
+		left	= 1;
 	}
+
+	if (scancode == 0xF074) {
+		right 	= 0;
+	} else if (scancode == 0xE074) {
+		right	= 1;
+	}
+
+	if (scancode == 0xF075) {
+		up 		= 0;
+	} else if (scancode == 0xE075) {
+		up		= 1;
+	}
+
+	if (scancode == 0xF072) {
+		down 	= 0;
+	} else if (scancode == 0xE072) {
+		down	= 1;
+	}
+
+	if (scancode == 0xF029) {
+		shoot	= 0;
+	} else if ((scancode & 0xFF) == 0x29) {
+		shoot 	= 1;
+	}
+
+	DE1SoC_SevenSeg_SetDoubleHex(0, scancode & 0xFF);
+	DE1SoC_SevenSeg_SetDoubleHex(2, (scancode & 0xFF00) >> 8);
+
+	*LED_ptr = (right) | (left<<1) | (up<<2) | (down<<3);
 }
 
 void intro()
