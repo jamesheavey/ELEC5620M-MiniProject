@@ -27,18 +27,24 @@ volatile unsigned int *key_ptr = (unsigned int *) 0xFF20005C;	// key buttons edg
 
 const unsigned int SCALER = 200 - 1;
 const unsigned int PERIOD = 225000000/(SCALER+1);		// 60 Hz
-const unsigned int NUM_TASKS = 3;
+const unsigned int NUM_TASKS = 4;
 const unsigned int NUM_MISSILES = 10;
+const unsigned int NUM_METEORS = 10;
 const unsigned int COOLDOWN_TIMER = 100;
 
 typedef void (*TaskFunction) ( void );
 
-bool left, right, up, down, shoot;
+bool left, right, up, down, shoot, pause;
 
 int shipX, shipY;
 int ship_index;
+int thruster_index = 0;
 
 int bg_index;
+
+int meteors[NUM_METEORS][2];
+int meteor_enable[NUM_METEORS];
+int meteor_timer[NUM_METEORS];
 
 int missiles[NUM_MISSILES][2];
 int missile_enable[NUM_MISSILES];
@@ -48,6 +54,7 @@ int cooldown = 0;
 void init()
 {
 	int i;
+	srand(time(NULL));
 
 	PS2_setInterrupt(1);
 
@@ -63,9 +70,14 @@ void init()
 		missile_enable[i] = 0;
 	}
 
+	for (i = 0; i < NUM_METEORS; i++){
+		meteors[i][0] = 10000;
+		meteors[i][1] = 10000;
+		meteor_enable[i] = 0;
+	}
+
 	shipX = (SCREEN_WIDTH - PLAYER_WIDTH)/2, shipY =  SCREEN_HEIGHT - PLAYER_HEIGHT - 10;
 
-	srand(time(NULL));
 	bg_index = (rand()) % 9;
 	ship_index = (rand()) % 4;
 }
@@ -85,9 +97,16 @@ void move_ship()
 	}
 
 	VGA_drawBGSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
+
+	if (ship_index != 2) {
+		VGA_drawBGSprite(background[bg_index], thruster[thruster_index], shipX+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
+	} else {
+		VGA_drawBGSprite(background[bg_index], thruster[thruster_index], shipX-6+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
+		VGA_drawBGSprite(background[bg_index], thruster[thruster_index], shipX+5+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
+	}
 }
 
-void shoot_laser()
+void shoot_missile()
 {
 	if (shoot && cooldown == 0){
 		if (missile_count % 2 == 0){
@@ -107,7 +126,7 @@ void shoot_laser()
 	}
 }
 
-void move_laser()
+void move_missile()
 {
 	int i;
 
@@ -116,9 +135,8 @@ void move_laser()
 			missiles[i][1] = missiles[i][1] - 1;
 			VGA_drawBGSprite(background[bg_index], missile, missiles[i][0], missiles[i][1], MISSILE_WIDTH, MISSILE_HEIGHT);
 
-			if (missiles[i][1] <= 0){
+			if (missiles[i][1] + MISSILE_HEIGHT <= 0){
 				missile_enable[i] = 0;
-				VGA_clearArea(background[bg_index], missiles[i][0], missiles[i][1], MISSILE_WIDTH, MISSILE_HEIGHT);
 			}
 		}
 	}
@@ -132,44 +150,51 @@ void change_ship_sprite()
 	}
 }
 
+void animation()
+{
+	thruster_index = (thruster_index + 1) % 4;
+}
+
 void PS2_input()
 {
 	unsigned int scancode = PS2_readInput();
 
-	if (scancode == 0xF06B) {
-		left 	= 0;
-	} else if (scancode == 0xE06B) {
-		left	= 1;
-	}
+	if (scancode == 0xF06B) 			{ left 	= 0; }
+	else if (scancode == 0xE06B) 		{ left	= 1; }
 
-	if (scancode == 0xF074) {
-		right 	= 0;
-	} else if (scancode == 0xE074) {
-		right	= 1;
-	}
+	if (scancode == 0xF074) 			{ right = 0; }
+	else if (scancode == 0xE074) 		{ right	= 1; }
 
-	if (scancode == 0xF075) {
-		up 		= 0;
-	} else if (scancode == 0xE075) {
-		up		= 1;
-	}
+	if (scancode == 0xF075) 			{ up 	= 0; }
+	else if (scancode == 0xE075) 		{ up	= 1; }
 
-	if (scancode == 0xF072) {
-		down 	= 0;
-	} else if (scancode == 0xE072) {
-		down	= 1;
-	}
+	if (scancode == 0xF072) 			{ down 	= 0; }
+	else if (scancode == 0xE072) 		{ down	= 1; }
 
-	if (scancode == 0xF029) {
-		shoot	= 0;
-	} else if ((scancode & 0xFF) == 0x29) {
-		shoot 	= 1;
-	}
+	if (scancode == 0xF029) 			{ shoot	= 0; }
+	else if ((scancode & 0xFF) == 0x29) { shoot = 1; }
 
 	DE1SoC_SevenSeg_SetDoubleHex(0, scancode & 0xFF);
 	DE1SoC_SevenSeg_SetDoubleHex(2, (scancode & 0xFF00) >> 8);
 
 	*LED_ptr = (right) | (left<<1) | (up<<2) | (down<<3);
+}
+
+void pause_screen()
+{
+	if (*key_ptr & 0x8) {
+		*key_ptr = 0xF;
+		Timer_setControl(SCALER, 0, 1, 0);
+
+		VGA_drawString("PAUSED", 40, 30);
+
+		while (!(*key_ptr & 0x8)) { PS2_input(); HPS_ResetWatchdog(); }
+
+		VGA_drawString("      ", 40, 30);
+
+		*key_ptr = 0xF;
+		Timer_setControl(SCALER, 0, 1, 1);
+	}
 }
 
 void intro()
@@ -198,8 +223,8 @@ int main ()
 	int i;
 
 	unsigned int lastIncrTime[NUM_TASKS] = {0};												// all timers start incrementing immediately
-	const unsigned int incrPeriod[NUM_TASKS] = {PERIOD/200, PERIOD/500, PERIOD/500}; 		// set the increment period for all timer units
-	TaskFunction taskFunctions[NUM_TASKS] = {&move_ship, &shoot_laser, &move_laser};		// define task function struct to call increment functions when required
+	const unsigned int incrPeriod[NUM_TASKS] = {PERIOD/150, PERIOD/500, PERIOD/500, PERIOD/20}; 		// set the increment period for all timer units
+	TaskFunction taskFunctions[NUM_TASKS] = {&move_ship, &shoot_missile, &move_missile, &animation};		// define task function struct to call increment functions when required
 
 	init();
 
@@ -207,6 +232,8 @@ int main ()
 
 	while (1) {
 		PS2_input();
+
+		pause_screen();
 
 		for (i = 0; i < NUM_TASKS; i++) {
 			if ((lastIncrTime[i] - Timer_readValue()) >= incrPeriod[i]) {

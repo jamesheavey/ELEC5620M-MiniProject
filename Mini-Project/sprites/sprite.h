@@ -15,6 +15,13 @@ extern const unsigned short player_ship[4][2304];
 const int PLAYER_WIDTH 		= 48;
 const int PLAYER_HEIGHT 	= 48;
 
+extern const unsigned short thruster[4][182];
+
+const int THRUSTER_WIDTH	= 13;
+const int THRUSTER_HEIGHT	= 14;
+
+const int thruster_y_offset[4] = {41, 41, 44, 45};
+
 extern const unsigned short laser[105];
 
 const int LASER_WIDTH 		= 7;
@@ -24,6 +31,10 @@ extern const unsigned short missile[360];
 
 const int MISSILE_WIDTH 	= 12;
 const int MISSILE_HEIGHT 	= 30;
+
+extern const unsigned short meteor[8][625];
+
+const int METEOR_SIZE 		= 25;
 
 extern const unsigned short title[4862];
 
