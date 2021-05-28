@@ -27,7 +27,7 @@ volatile unsigned int *key_ptr = (unsigned int *) 0xFF20005C;	// key buttons edg
 
 const unsigned int SCALER = 200 - 1;
 const unsigned int PERIOD = 225000000/(SCALER+1);		// 60 Hz
-const unsigned int NUM_TASKS = 4;
+const unsigned int NUM_TASKS = 5;
 const unsigned int NUM_MISSILES = 10;
 const unsigned int NUM_METEORS = 10;
 const unsigned int COOLDOWN_TIMER = 100;
@@ -43,8 +43,9 @@ int thruster_index = 0;
 int bg_index;
 
 int meteors[NUM_METEORS][2];
-int meteor_enable[NUM_METEORS];
 int meteor_timer[NUM_METEORS];
+
+int meteor_index = 0;
 
 int missiles[NUM_MISSILES][2];
 int missile_enable[NUM_MISSILES];
@@ -71,15 +72,15 @@ void init()
 	}
 
 	for (i = 0; i < NUM_METEORS; i++){
-		meteors[i][0] = 10000;
-		meteors[i][1] = 10000;
-		meteor_enable[i] = 0;
+		meteors[i][0] = rand() % (320 - METEOR_SIZE);
+		meteors[i][1] = -1 * (rand() % 500) - METEOR_SIZE;
+		meteor_timer[i] = rand() % 5;
 	}
 
 	shipX = (SCREEN_WIDTH - PLAYER_WIDTH)/2, shipY =  SCREEN_HEIGHT - PLAYER_HEIGHT - 10;
 
-	bg_index = (rand()) % 9;
-	ship_index = (rand()) % 4;
+	bg_index = rand() % 9;
+	ship_index = rand() % 4;
 }
 
 void move_ship()
@@ -126,7 +127,7 @@ void shoot_missile()
 	}
 }
 
-void move_missile()
+void move_missiles()
 {
 	int i;
 
@@ -142,6 +143,31 @@ void move_missile()
 	}
 }
 
+void move_meteors()
+{
+	int i;
+
+	for (i = 0; i < NUM_METEORS; i++){
+		meteor_timer[i] = meteor_timer[i] - 1;
+
+		if (meteor_timer[i] <= 0) {
+			meteor_timer[i] = rand() % 5;
+			meteors[i][1] = meteors[i][1] + 1;
+		}
+
+		if(meteors[i][1] >= SCREEN_HEIGHT){
+			meteors[i][0] = rand() % (320 - METEOR_SIZE);
+			meteors[i][1] = -1 * (rand() % 500) - METEOR_SIZE;
+
+			// lose life
+		}
+
+		if((meteors[i][1] <= SCREEN_HEIGHT + METEOR_SIZE) && (meteors[i][1] >= -METEOR_SIZE)) {
+			VGA_drawBGSprite(background[bg_index], meteor[(meteor_index + i)%8], meteors[i][0], meteors[i][1], METEOR_SIZE, METEOR_SIZE);
+		}
+	}
+}
+
 void change_ship_sprite()
 {
 	if (*key_ptr & 0x1) {
@@ -153,6 +179,7 @@ void change_ship_sprite()
 void animation()
 {
 	thruster_index = (thruster_index + 1) % 4;
+	meteor_index = (meteor_index + 1) % 8;
 }
 
 void PS2_input()
@@ -223,8 +250,8 @@ int main ()
 	int i;
 
 	unsigned int lastIncrTime[NUM_TASKS] = {0};												// all timers start incrementing immediately
-	const unsigned int incrPeriod[NUM_TASKS] = {PERIOD/150, PERIOD/500, PERIOD/500, PERIOD/20}; 		// set the increment period for all timer units
-	TaskFunction taskFunctions[NUM_TASKS] = {&move_ship, &shoot_missile, &move_missile, &animation};		// define task function struct to call increment functions when required
+	const unsigned int incrPeriod[NUM_TASKS] = {PERIOD/150, PERIOD/500, PERIOD/500, PERIOD/10, PERIOD/300}; 		// set the increment period for all timer units
+	TaskFunction taskFunctions[NUM_TASKS] = {&move_ship, &shoot_missile, &move_missiles, &animation, &move_meteors};		// define task function struct to call increment functions when required
 
 	init();
 
