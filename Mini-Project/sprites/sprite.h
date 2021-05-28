@@ -8,21 +8,31 @@
 #ifndef SPRITE_H_
 #define SPRITE_H_
 
-extern const unsigned short background[4][76800];
+extern const unsigned short background[9][76800];
 
 extern const unsigned short player_ship[4][2304];
 
-const int PLAYER_WIDTH 	= 48;
-const int PLAYER_HEIGHT = 48;
+const int PLAYER_WIDTH 		= 48;
+const int PLAYER_HEIGHT 	= 48;
 
 extern const unsigned short laser[105];
 
-const int LASER_WIDTH 	= 7;
-const int LASER_HEIGHT = 15;
+const int LASER_WIDTH 		= 7;
+const int LASER_HEIGHT 		= 15;
 
 extern const unsigned short missile[360];
 
 const int MISSILE_WIDTH 	= 12;
-const int MISSILE_HEIGHT = 30;
+const int MISSILE_HEIGHT 	= 30;
+
+extern const unsigned short title[4862];
+
+const int TITLE_WIDTH 		= 187;
+const int TITLE_HEIGHT 		= 26;
+
+extern const unsigned short game_over[4056] ;
+
+const int OVER_WIDTH 		= 156;
+const int OVER_HEIGHT 		= 26;
 
 #endif /* SPRITE_H_ */
