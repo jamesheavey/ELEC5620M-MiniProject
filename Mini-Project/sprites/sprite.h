@@ -10,17 +10,18 @@
 
 extern const unsigned short background[9][76800];
 
-extern const unsigned short player_ship[4][2304];
+extern const unsigned short ship[5][1980];
 
-const int PLAYER_WIDTH 		= 48;
-const int PLAYER_HEIGHT 	= 48;
+const int SHIP_WIDTH 		= 45;
+const int SHIP_HEIGHT 		= 44;
 
 extern const unsigned short thruster[4][182];
 
 const int THRUSTER_WIDTH	= 13;
 const int THRUSTER_HEIGHT	= 14;
 
-const int thruster_y_offset[4] = {41, 41, 44, 45};
+const int THRUSTER_Y 		= 44;
+const int THRUSTER_OFS[5]	= {3,5,7,6,6};
 
 extern const unsigned short laser[105];
 

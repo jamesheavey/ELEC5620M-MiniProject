@@ -37,7 +37,7 @@ typedef void (*TaskFunction) ( void );
 bool left, right, up, down, shoot, pause;
 
 int shipX, shipY;
-int ship_index;
+int ship_index = 2;
 int thruster_index = 0;
 
 int bg_index;
@@ -91,44 +91,49 @@ void init()
 		explosion_enable[i] = 0;
 	}
 
-	shipX = (SCREEN_WIDTH - PLAYER_WIDTH)/2, shipY =  (SCREEN_HEIGHT - PLAYER_HEIGHT)/2;
+	shipX = (SCREEN_WIDTH - SHIP_WIDTH)/2, shipY =  (SCREEN_HEIGHT - SHIP_HEIGHT)/2;
 
 	bg_index = rand() % 9;
-	ship_index = rand() % 4;
+}
+
+void draw_ship()
+{
+	VGA_drawSprite(background[bg_index], ship[ship_index], shipX, shipY, SHIP_WIDTH, SHIP_HEIGHT);
+	VGA_drawBackground(background[bg_index], shipX, shipY + SHIP_HEIGHT, SHIP_WIDTH, THRUSTER_HEIGHT);
+	if (right) {
+		VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX+THRUSTER_OFS[ship_index]+(SHIP_WIDTH-THRUSTER_WIDTH)/2, shipY+THRUSTER_Y, THRUSTER_WIDTH, THRUSTER_HEIGHT);
+		VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX-THRUSTER_OFS[4-ship_index]+(SHIP_WIDTH-THRUSTER_WIDTH)/2, shipY+THRUSTER_Y, THRUSTER_WIDTH, THRUSTER_HEIGHT);
+	} else {
+		VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX-THRUSTER_OFS[4-ship_index]+(SHIP_WIDTH-THRUSTER_WIDTH)/2, shipY+THRUSTER_Y, THRUSTER_WIDTH, THRUSTER_HEIGHT);
+		VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX+THRUSTER_OFS[ship_index]+(SHIP_WIDTH-THRUSTER_WIDTH)/2, shipY+THRUSTER_Y, THRUSTER_WIDTH, THRUSTER_HEIGHT);
+	}
 }
 
 void move_ship()
 {
 	if (left && shipX > 0) {
 		shipX = shipX - 1;
-	} else if (right && shipX < SCREEN_WIDTH - PLAYER_WIDTH) {
+	} else if (right && shipX < SCREEN_WIDTH - SHIP_WIDTH) {
 		shipX = shipX + 1;
 	}
 
 	if (up && shipY > 0) {
 		shipY = shipY - 1;
-	} else if (down && shipY < SCREEN_HEIGHT - PLAYER_HEIGHT) {
+	} else if (down && shipY < SCREEN_HEIGHT - SHIP_HEIGHT) {
 		shipY = shipY + 1;
 	}
 
-	VGA_drawSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
-
-	if (ship_index != 2) {
-		VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
-	} else {
-		VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX-6+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
-		VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX+5+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
-	}
+	draw_ship();
 }
 
 void shoot_missile()
 {
 	if (shoot && cooldown == 0){
 		if (missile_count % 2 == 0){
-			missiles[missile_count][0] = shipX + (3*PLAYER_WIDTH)/4 - (MISSILE_WIDTH/2);
+			missiles[missile_count][0] = shipX + (4*SHIP_WIDTH)/5 - (MISSILE_WIDTH/2);
 			missiles[missile_count][1] = shipY;
 		} else {
-			missiles[missile_count][0] = shipX + (PLAYER_WIDTH)/4 - (MISSILE_WIDTH/2);
+			missiles[missile_count][0] = shipX + (SHIP_WIDTH)/5 - (MISSILE_WIDTH/2);
 			missiles[missile_count][1] = shipY;
 		}
 
@@ -175,14 +180,6 @@ void move_meteors()
 	}
 }
 
-void change_ship_sprite()
-{
-	if (*key_ptr & 0x1) {
-		ship_index = (ship_index + 1) % 4;
-		*key_ptr = 0xF;
-	}
-}
-
 void animation()
 {
 	int i;
@@ -199,6 +196,13 @@ void animation()
 			}
 		}
 	}
+
+	if ((left && ship_index > 0) || (!right && ship_index > 2)) {
+		ship_index--;
+	} else if ((right && ship_index < 4) || (!left && ship_index < 2)) {
+		ship_index++;
+	}
+
 }
 
 void collision()
@@ -290,23 +294,18 @@ void intro()
 	const unsigned int incrPeriod [3] = {PERIOD/20, PERIOD/40, PERIOD/3};
 	int earthX = (SCREEN_WIDTH - EARTH_WIDTH)/2, earthY = SCREEN_HEIGHT - EARTH_HEIGHT/3;
 	int titleX = (SCREEN_WIDTH - TITLE_WIDTH)/2, titleY = 20;
-	unsigned int scancode = 0;
 
 	VGA_drawBackground(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	VGA_drawSprite(background[bg_index], title, titleX, titleY, TITLE_WIDTH, TITLE_HEIGHT);
 	VGA_drawString("PRESS ANY KEY TO START", 30, 15);
 
-	while (!scancode) {
-
+	while (!PS2_readInput()) {
 		if ((lastIncrTime[2] - Timer_readValue()) >= incrPeriod[2]) {
 			earth_index = (earth_index + 1) % 8;
-			VGA_drawSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
+			VGA_drawSprite(background[bg_index], ship[ship_index], shipX, shipY, SHIP_WIDTH, SHIP_HEIGHT);
 			VGA_drawSprite(background[bg_index], earth[earth_index], earthX, earthY, EARTH_WIDTH, EARTH_HEIGHT/3);
 			lastIncrTime[2] -= incrPeriod[2];
 		}
-
-		change_ship_sprite();
-		scancode = PS2_readInput();
 		HPS_ResetWatchdog(); // reset the watchdog.
 	}
 
@@ -318,13 +317,8 @@ void intro()
 		if ((lastIncrTime[0] - Timer_readValue()) >= incrPeriod[0]) {
 			shipY = shipY + 1;
 			animation();
-			VGA_drawSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
-			if (ship_index != 2) {
-				VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
-			} else {
-				VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX-6+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
-				VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX+5+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
-			}
+			draw_ship();
+
 			lastIncrTime[0] -= incrPeriod[0];
 		}
 
