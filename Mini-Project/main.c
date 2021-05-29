@@ -101,13 +101,13 @@ void move_ship()
 		shipY = shipY + 1;
 	}
 
-	VGA_drawBGSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
+	VGA_drawSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
 
 	if (ship_index != 2) {
-		VGA_drawBGSprite(background[bg_index], thruster[thruster_index], shipX+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
+		VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
 	} else {
-		VGA_drawBGSprite(background[bg_index], thruster[thruster_index], shipX-6+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
-		VGA_drawBGSprite(background[bg_index], thruster[thruster_index], shipX+5+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
+		VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX-6+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
+		VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX+5+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
 	}
 }
 
@@ -138,7 +138,7 @@ void move_missiles()
 	for (i = 0; i < NUM_MISSILES; i++){
 		if(missile_enable[i]){
 			missiles[i][1] = missiles[i][1] - 1;
-			VGA_drawBGSprite(background[bg_index], missile, missiles[i][0], missiles[i][1], MISSILE_WIDTH, MISSILE_HEIGHT);
+			VGA_drawSprite(background[bg_index], missile, missiles[i][0], missiles[i][1], MISSILE_WIDTH, MISSILE_HEIGHT);
 
 			if (missiles[i][1] + MISSILE_HEIGHT <= 0){
 				missile_enable[i] = 0;
@@ -159,7 +159,7 @@ void move_meteors()
 			meteors[i][1] = meteors[i][1] + 1;
 
 			if((meteors[i][1] <= SCREEN_HEIGHT) && (meteors[i][1] >= -METEOR_SIZE)) {
-				VGA_drawBGSprite(background[bg_index], meteor[(meteor_index + i)%8], meteors[i][0], meteors[i][1], METEOR_SIZE, METEOR_SIZE);
+				VGA_drawSprite(background[bg_index], meteor[(meteor_index + i)%8], meteors[i][0], meteors[i][1], METEOR_SIZE, METEOR_SIZE);
 			}
 		}
 
@@ -238,8 +238,8 @@ void intro()
 	int titleX = (SCREEN_WIDTH - TITLE_WIDTH)/2, titleY = 20;
 	unsigned int scancode = 0;
 
-	VGA_drawSprite(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-	VGA_drawBGSprite(background[bg_index], title, titleX, titleY, TITLE_WIDTH, TITLE_HEIGHT);
+	VGA_drawBackground(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+	VGA_drawSprite(background[bg_index], title, titleX, titleY, TITLE_WIDTH, TITLE_HEIGHT);
 
 	VGA_drawString("PRESS ANY KEY TO START", 30, 15);
 
@@ -248,8 +248,8 @@ void intro()
 		change_ship_sprite();
 		if ((lastIncrTime[2] - Timer_readValue()) >= incrPeriod[2]) {
 			earth_index = (earth_index + 1) % 8;
-			VGA_drawBGSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
-			VGA_drawBGSprite(background[bg_index], earth[earth_index], earthX, earthY, EARTH_WIDTH, EARTH_HEIGHT/3);
+			VGA_drawSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
+			VGA_drawSprite(background[bg_index], earth[earth_index], earthX, earthY, EARTH_WIDTH, EARTH_HEIGHT/3);
 			lastIncrTime[2] -= incrPeriod[2];
 		}
 
@@ -264,12 +264,12 @@ void intro()
 		if ((lastIncrTime[0] - Timer_readValue()) >= incrPeriod[0]) {
 			shipY = shipY + 1;
 			animation();
-			VGA_drawBGSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
+			VGA_drawSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
 			if (ship_index != 2) {
-				VGA_drawBGSprite(background[bg_index], thruster[thruster_index], shipX+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
+				VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
 			} else {
-				VGA_drawBGSprite(background[bg_index], thruster[thruster_index], shipX-6+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
-				VGA_drawBGSprite(background[bg_index], thruster[thruster_index], shipX+5+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
+				VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX-6+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
+				VGA_drawSprite(background[bg_index], thruster[thruster_index], shipX+5+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
 			}
 			lastIncrTime[0] -= incrPeriod[0];
 		}
@@ -277,8 +277,8 @@ void intro()
 		if ((lastIncrTime[1] - Timer_readValue()) >= incrPeriod[1]) {
 			earthY = earthY + 1;
 			titleY = titleY - 1;
-			VGA_drawBGSprite(background[bg_index], earth[earth_index], earthX, earthY, EARTH_WIDTH, EARTH_HEIGHT/3);
-			VGA_drawBGSprite(background[bg_index], title, titleX, titleY, TITLE_WIDTH, TITLE_HEIGHT);
+			VGA_drawSprite(background[bg_index], earth[earth_index], earthX, earthY, EARTH_WIDTH, EARTH_HEIGHT/3);
+			VGA_drawSprite(background[bg_index], title, titleX, titleY, TITLE_WIDTH, TITLE_HEIGHT);
 			lastIncrTime[1] -= incrPeriod[1];
 		}
 
@@ -292,10 +292,10 @@ void intro()
 	}
 
 	Timer_setLoad(0xFFFFFFFF);
-	VGA_drawSprite(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+	VGA_drawBackground(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
-int main ()
+void defend_earth()
 {
 	int i;
 
@@ -303,11 +303,7 @@ int main ()
 	const unsigned int incrPeriod[NUM_TASKS] = {PERIOD/200, PERIOD/500, PERIOD/500, PERIOD/10, PERIOD/100}; 		// set the increment period for all timer units
 	TaskFunction taskFunctions[NUM_TASKS] = {&move_ship, &shoot_missile, &move_missiles, &animation, &move_meteors};		// define task function struct to call increment functions when required
 
-	init();
-
-	intro();
-
-	while (1) {
+	while (1) {  // while not game over
 		PS2_input();
 
 		pause_screen();
@@ -320,5 +316,16 @@ int main ()
 		}
 
 		HPS_ResetWatchdog(); // reset the watchdog.
+	}
+}
+
+int main ()
+{
+	init();
+
+	while (1) {
+		intro();
+
+		defend_earth();
 	}
 }
