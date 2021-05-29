@@ -15,7 +15,7 @@ extern const unsigned short ship[5][1980];
 const int SHIP_WIDTH 		= 45;
 const int SHIP_HEIGHT 		= 44;
 
-extern const unsigned short thruster[4][182];
+extern const unsigned short thruster[6][182];
 
 const int THRUSTER_WIDTH	= 13;
 const int THRUSTER_HEIGHT	= 14;

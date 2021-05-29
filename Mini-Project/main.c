@@ -34,7 +34,7 @@ const unsigned int COOLDOWN_TIMER = 100;
 
 typedef void (*TaskFunction) ( void );
 
-bool left, right, up, down, shoot, pause;
+bool left, right, up, down, shootL, shootR, pause;
 
 int shipX, shipY;
 int ship_index = 2;
@@ -51,8 +51,6 @@ int meteor_index = 0;
 int explosion_enable[NUM_METEORS];
 int explosions[NUM_METEORS][2];
 int explosion_timer[NUM_METEORS];
-
-int explosion_index[NUM_METEORS] = 0;
 
 int earth_index = 0;
 
@@ -119,7 +117,7 @@ void move_ship()
 
 	if (up && shipY > 0) {
 		shipY = shipY - 1;
-	} else if (down && shipY < SCREEN_HEIGHT - SHIP_HEIGHT) {
+	} else if (down && shipY < SCREEN_HEIGHT - SHIP_HEIGHT - THRUSTER_HEIGHT) {
 		shipY = shipY + 1;
 	}
 
@@ -128,11 +126,11 @@ void move_ship()
 
 void shoot_missile()
 {
-	if (shoot && cooldown == 0){
-		if (missile_count % 2 == 0){
+	if ((shootL || shootR) && cooldown == 0){
+		if (shootR) {
 			missiles[missile_count][0] = shipX + (4*SHIP_WIDTH)/5 - (MISSILE_WIDTH/2);
 			missiles[missile_count][1] = shipY;
-		} else {
+		} else if (shootL) {
 			missiles[missile_count][0] = shipX + (SHIP_WIDTH)/5 - (MISSILE_WIDTH/2);
 			missiles[missile_count][1] = shipY;
 		}
@@ -184,7 +182,7 @@ void animation()
 {
 	int i;
 
-	thruster_index = (thruster_index + 1) % 4;
+	thruster_index = (thruster_index + 1) % 6;
 	meteor_index = (meteor_index + 1) % 8;
 
 	for (i = 0; i < NUM_METEORS; i++) {
@@ -227,6 +225,8 @@ void collision()
 						meteor_timer_start[i] = rand() % 5;
 
 						missile_enable[j] = 0;
+
+						// increase score based on meteor speed
 					}
 
 					if (missiles[j][1] + MISSILE_HEIGHT <= 0){
@@ -243,6 +243,17 @@ void collision()
 
 			// lose life
 		}
+
+		if((shipX + 10<= meteors[i][0] + METEOR_SIZE && shipX + SHIP_WIDTH - 10 >= meteors[i][0]) && (shipY <= meteors[i][1] + METEOR_SIZE && shipY + SHIP_WIDTH >= meteors[i][1])){
+			VGA_drawBackground(background[bg_index], meteors[i][0], meteors[i][1], METEOR_SIZE, METEOR_SIZE);
+			meteors[i][0] = rand() % (320 - METEOR_SIZE);
+			meteors[i][1] = -1 * (rand() % 1000) - METEOR_SIZE;
+			meteor_timer_start[i] = rand() % 5;
+
+			// lose 3 lives
+		}
+
+//		if (!lives) { game_over = 1; }
 	}
 }
 
@@ -250,20 +261,23 @@ void PS2_input()
 {
 	unsigned int scancode = PS2_readInput();
 
-	if (scancode == 0xF06B) 			{ left 	= 0; }
-	else if (scancode == 0xE06B) 		{ left	= 1; }
+	if (scancode == 0xF06B) 			{ left 		= 0; }
+	else if (scancode == 0xE06B) 		{ left		= 1; }
 
-	if (scancode == 0xF074) 			{ right = 0; }
-	else if (scancode == 0xE074) 		{ right	= 1; }
+	if (scancode == 0xF074) 			{ right 	= 0; }
+	else if (scancode == 0xE074) 		{ right		= 1; }
 
-	if (scancode == 0xF075) 			{ up 	= 0; }
-	else if (scancode == 0xE075) 		{ up	= 1; }
+	if (scancode == 0xF075) 			{ up 		= 0; }
+	else if (scancode == 0xE075) 		{ up		= 1; }
 
-	if (scancode == 0xF072) 			{ down 	= 0; }
-	else if (scancode == 0xE072) 		{ down	= 1; }
+	if (scancode == 0xF072) 			{ down 		= 0; }
+	else if (scancode == 0xE072) 		{ down		= 1; }
 
-	if (scancode == 0xF029) 			{ shoot	= 0; }
-	else if ((scancode & 0xFF) == 0x29) { shoot = 1; }
+	if (scancode == 0xF01C) 			{ shootL	= 0; }
+	else if ((scancode & 0xFF) == 0x1C) { shootL 	= 1; }
+
+	if (scancode == 0xF023) 			{ shootR	= 0; }
+	else if ((scancode & 0xFF) == 0x23) { shootR	= 1; }
 
 	DE1SoC_SevenSeg_SetDoubleHex(0, scancode & 0xFF);
 	DE1SoC_SevenSeg_SetDoubleHex(2, (scancode & 0xFF00) >> 8);
@@ -291,7 +305,7 @@ void pause_screen()
 void intro()
 {
 	unsigned int lastIncrTime [3] = {0};
-	const unsigned int incrPeriod [3] = {PERIOD/20, PERIOD/40, PERIOD/3};
+	const unsigned int incrPeriod [3] = {PERIOD/10, PERIOD/20, PERIOD/4};
 	int earthX = (SCREEN_WIDTH - EARTH_WIDTH)/2, earthY = SCREEN_HEIGHT - EARTH_HEIGHT/3;
 	int titleX = (SCREEN_WIDTH - TITLE_WIDTH)/2, titleY = 20;
 
@@ -315,7 +329,7 @@ void intro()
 
 	while (earthY < SCREEN_HEIGHT) {
 		if ((lastIncrTime[0] - Timer_readValue()) >= incrPeriod[0]) {
-			shipY = shipY + 1;
+			shipY = shipY - 1;
 			animation();
 			draw_ship();
 
@@ -348,7 +362,7 @@ void defend_earth()
 	int i;
 
 	unsigned int lastIncrTime[NUM_TASKS] = {0};
-	const unsigned int incrPeriod[NUM_TASKS] = {PERIOD/200, PERIOD/500, PERIOD/500, PERIOD/10, PERIOD/100};
+	const unsigned int incrPeriod[NUM_TASKS] = {PERIOD/150, PERIOD/500, PERIOD/500, PERIOD/10, PERIOD/100};
 	TaskFunction taskFunctions[NUM_TASKS] = {&move_ship, &shoot_missile, &move_missiles, &animation, &move_meteors};
 
 	while (1) {  // while not game over
