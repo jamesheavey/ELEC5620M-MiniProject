@@ -51,4 +51,8 @@ extern const unsigned short earth[8][40000];
 const int EARTH_WIDTH		= 200;
 const int EARTH_HEIGHT		= 200;
 
+const unsigned short explosion[11][625];
+
+const int EXPLOSION_SIZE 	= 25;
+
 #endif /* SPRITE_H_ */

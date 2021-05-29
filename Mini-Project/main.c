@@ -233,12 +233,13 @@ void pause_screen()
 void intro()
 {
 	unsigned int lastIncrTime [3] = {0};
-	const unsigned int incrPeriod [3] = {PERIOD/20, PERIOD/30, PERIOD/3};
+	const unsigned int incrPeriod [3] = {PERIOD/20, PERIOD/40, PERIOD/3};
 	int earthX = (SCREEN_WIDTH - EARTH_WIDTH)/2, earthY = SCREEN_HEIGHT - EARTH_HEIGHT/3;
+	int titleX = (SCREEN_WIDTH - TITLE_WIDTH)/2, titleY = 20;
 	unsigned int scancode = 0;
 
 	VGA_drawSprite(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-	VGA_drawBGSprite(background[bg_index], title, (SCREEN_WIDTH - TITLE_WIDTH)/2,20, TITLE_WIDTH, TITLE_HEIGHT);
+	VGA_drawBGSprite(background[bg_index], title, titleX, titleY, TITLE_WIDTH, TITLE_HEIGHT);
 
 	VGA_drawString("PRESS ANY KEY TO START", 30, 15);
 
@@ -258,7 +259,6 @@ void intro()
 	memset(lastIncrTime, 0, sizeof lastIncrTime);
 	VGA_drawString("                      ", 30, 15);
 	Timer_setLoad(0xFFFFFFFF);
-	VGA_drawSprite(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 	while (earthY < SCREEN_HEIGHT) {
 		if ((lastIncrTime[0] - Timer_readValue()) >= incrPeriod[0]) {
@@ -276,8 +276,9 @@ void intro()
 
 		if ((lastIncrTime[1] - Timer_readValue()) >= incrPeriod[1]) {
 			earthY = earthY + 1;
+			titleY = titleY - 1;
 			VGA_drawBGSprite(background[bg_index], earth[earth_index], earthX, earthY, EARTH_WIDTH, EARTH_HEIGHT/3);
-
+			VGA_drawBGSprite(background[bg_index], title, titleX, titleY, TITLE_WIDTH, TITLE_HEIGHT);
 			lastIncrTime[1] -= incrPeriod[1];
 		}
 
