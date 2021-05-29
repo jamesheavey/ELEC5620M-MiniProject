@@ -48,6 +48,8 @@ int meteor_timer_elapsed[NUM_METEORS];
 
 int meteor_index = 0;
 
+int earth_index = 0;
+
 int missiles[NUM_MISSILES][2];
 int missile_enable[NUM_MISSILES];
 int missile_count = 0;
@@ -79,7 +81,7 @@ void init()
 		meteor_timer_elapsed[i] = meteor_timer_start[i];
 	}
 
-	shipX = (SCREEN_WIDTH - PLAYER_WIDTH)/2, shipY =  SCREEN_HEIGHT - PLAYER_HEIGHT - 10;
+	shipX = (SCREEN_WIDTH - PLAYER_WIDTH)/2, shipY =  (SCREEN_HEIGHT - PLAYER_HEIGHT)/2;
 
 	bg_index = rand() % 9;
 	ship_index = rand() % 4;
@@ -230,21 +232,64 @@ void pause_screen()
 
 void intro()
 {
-	unsigned int scancode;
+	unsigned int lastIncrTime [3] = {0};
+	const unsigned int incrPeriod [3] = {PERIOD/20, PERIOD/30, PERIOD/3};
+	int earthX = (SCREEN_WIDTH - EARTH_WIDTH)/2, earthY = SCREEN_HEIGHT - EARTH_HEIGHT/3;
+	unsigned int scancode = 0;
 
 	VGA_drawSprite(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-	VGA_drawBGSprite(background[bg_index], title, (SCREEN_WIDTH - TITLE_WIDTH)/2,50, TITLE_WIDTH, TITLE_HEIGHT);
+	VGA_drawBGSprite(background[bg_index], title, (SCREEN_WIDTH - TITLE_WIDTH)/2,20, TITLE_WIDTH, TITLE_HEIGHT);
 
-	VGA_drawString("PRESS ANY KEY TO START", 30, 30);
+	VGA_drawString("PRESS ANY KEY TO START", 30, 15);
 
 	while (!scancode) {
 		scancode = PS2_readInput();
 		change_ship_sprite();
-		VGA_drawBGSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
+		if ((lastIncrTime[2] - Timer_readValue()) >= incrPeriod[2]) {
+			earth_index = (earth_index + 1) % 8;
+			VGA_drawBGSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
+			VGA_drawBGSprite(background[bg_index], earth[earth_index], earthX, earthY, EARTH_WIDTH, EARTH_HEIGHT/3);
+			lastIncrTime[2] -= incrPeriod[2];
+		}
+
 		HPS_ResetWatchdog(); // reset the watchdog.
 	}
 
-	VGA_drawString("                      ", 30, 30);
+	memset(lastIncrTime, 0, sizeof lastIncrTime);
+	VGA_drawString("                      ", 30, 15);
+	Timer_setLoad(0xFFFFFFFF);
+	VGA_drawSprite(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+	while (earthY < SCREEN_HEIGHT) {
+		if ((lastIncrTime[0] - Timer_readValue()) >= incrPeriod[0]) {
+			shipY = shipY + 1;
+			animation();
+			VGA_drawBGSprite(background[bg_index], player_ship[ship_index], shipX, shipY, PLAYER_WIDTH, PLAYER_HEIGHT);
+			if (ship_index != 2) {
+				VGA_drawBGSprite(background[bg_index], thruster[thruster_index], shipX+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
+			} else {
+				VGA_drawBGSprite(background[bg_index], thruster[thruster_index], shipX-6+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
+				VGA_drawBGSprite(background[bg_index], thruster[thruster_index], shipX+5+(PLAYER_WIDTH-THRUSTER_WIDTH+1)/2, shipY+thruster_y_offset[ship_index], THRUSTER_WIDTH, THRUSTER_HEIGHT);
+			}
+			lastIncrTime[0] -= incrPeriod[0];
+		}
+
+		if ((lastIncrTime[1] - Timer_readValue()) >= incrPeriod[1]) {
+			earthY = earthY + 1;
+			VGA_drawBGSprite(background[bg_index], earth[earth_index], earthX, earthY, EARTH_WIDTH, EARTH_HEIGHT/3);
+
+			lastIncrTime[1] -= incrPeriod[1];
+		}
+
+		if ((lastIncrTime[2] - Timer_readValue()) >= incrPeriod[2]) {
+			earth_index = (earth_index + 1) % 8;
+			lastIncrTime[2] -= incrPeriod[2];
+		}
+
+		PS2_readInput();
+		HPS_ResetWatchdog(); // reset the watchdog.
+	}
+
 	Timer_setLoad(0xFFFFFFFF);
 	VGA_drawSprite(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
