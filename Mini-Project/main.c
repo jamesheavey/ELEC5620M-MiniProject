@@ -59,7 +59,9 @@ int missile_enable[NUM_MISSILES];
 int missile_count;
 int cooldown;
 
-int lives, score;
+int health, score;
+
+unsigned int scancode;
 
 void init()
 {
@@ -98,8 +100,8 @@ void reset()
 
 	shipX = (SCREEN_WIDTH - SHIP_WIDTH)/2, shipY =  (SCREEN_HEIGHT - SHIP_HEIGHT)/2;
 
-	score = 0; lives = 10;
-	*LED_ptr = ~((signed int) -1 << lives);
+	score = 0; health = 10;
+	*LED_ptr = ~((signed int) -1 << health);
 	DE1SoC_SevenSeg_SetSixDec(score);
 
 	ship_index = 2, meteor_index = 0, thruster_index = 0, earth_index = 0;
@@ -214,6 +216,24 @@ void animation()
 
 }
 
+void display_score()
+{
+	char str[10];
+	sprintf(str, "%d", score);
+	VGA_drawString("          ", 65, 5);
+	VGA_drawString(str, 65, 5);
+
+	DE1SoC_SevenSeg_SetSixDec(score);
+}
+
+void display_health()
+{
+	VGA_drawBackground(background[bg_index], 135, SCREEN_HEIGHT - 25, 100, 10);
+	VGA_drawSquare(0x57EA, 135, SCREEN_HEIGHT - 25, health > 0 ? health*10:0, 10);
+
+	*LED_ptr = ~((signed int) -1 << health);
+}
+
 void collision()
 {
 	int i, j;
@@ -239,6 +259,8 @@ void collision()
 						meteor_timer_start[i] = rand() % 5;
 
 						missile_enable[j] = 0;
+
+						display_score();
 					}
 
 					if (missiles[j][1] + MISSILE_HEIGHT <= 0){
@@ -253,7 +275,8 @@ void collision()
 			meteors[i][1] = -1 * (rand() % 1000) - METEOR_SIZE;
 			meteor_timer_start[i] = rand() % 5;
 
-			lives = lives - 1;
+			health = health - 1;
+			display_health();
 		}
 
 		if((shipX + 10<= meteors[i][0] + METEOR_SIZE && shipX + SHIP_WIDTH - 10 >= meteors[i][0]) && (shipY <= meteors[i][1] + METEOR_SIZE && shipY + SHIP_WIDTH >= meteors[i][1])){
@@ -262,17 +285,15 @@ void collision()
 			meteors[i][1] = -1 * (rand() % 1000) - METEOR_SIZE;
 			meteor_timer_start[i] = rand() % 5;
 
-			lives = lives - 3;
+			health = health - 3;
+			display_health();
 		}
-
-		*LED_ptr = ~((signed int) -1 << lives);
-		DE1SoC_SevenSeg_SetSixDec(score);
 	}
 }
 
 void PS2_input()
 {
-	unsigned int scancode = PS2_readInput();
+	scancode = PS2_readInput();
 
 	if (scancode == 0xF06B) 			{ left 		= 0; }
 	else if (scancode == 0xE06B) 		{ left		= 1; }
@@ -318,17 +339,19 @@ void intro()
 	int titleX = (SCREEN_WIDTH - TITLE_WIDTH)/2, titleY = 20;
 
 	reset();
+	Timer_setLoad(0xFFFFFFFF);
 
 	VGA_drawBackground(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	VGA_drawSprite(background[bg_index], title, titleX, titleY, TITLE_WIDTH, TITLE_HEIGHT);
 	VGA_drawString("PRESS ANY KEY TO START", 30, 15);
 
-	while (!PS2_readInput()) {
+	while (!scancode) {
 		if ((lastIncrTime[2] - Timer_readValue()) >= incrPeriod[2]) {
 			earth_index = (earth_index + 1) % 8;
 			VGA_drawSprite(background[bg_index], ship[ship_index], shipX, shipY, SHIP_WIDTH, SHIP_HEIGHT);
 			VGA_drawSprite(background[bg_index], earth[earth_index], earthX, earthY, EARTH_WIDTH, EARTH_HEIGHT/3);
 			lastIncrTime[2] -= incrPeriod[2];
+			PS2_input();
 		}
 		HPS_ResetWatchdog(); // reset the watchdog.
 	}
@@ -358,8 +381,7 @@ void intro()
 			earth_index = (earth_index + 1) % 8;
 			lastIncrTime[2] -= incrPeriod[2];
 		}
-
-		PS2_readInput();
+		PS2_input();
 		HPS_ResetWatchdog(); // reset the watchdog.
 	}
 
@@ -375,7 +397,11 @@ void defend_earth()
 	const unsigned int incrPeriod[NUM_TASKS] = {PERIOD/150, PERIOD/500, PERIOD/500, PERIOD/10, PERIOD/100};
 	TaskFunction taskFunctions[NUM_TASKS] = {&move_ship, &shoot_missile, &move_missiles, &animation, &move_meteors};
 
-	while (lives > 0) {
+	VGA_drawString("HEALTH:", 25, 55);
+	display_health();
+	display_score();
+
+	while (health > 0) {
 		PS2_input();
 
 		pause_screen();
@@ -391,6 +417,8 @@ void defend_earth()
 
 		HPS_ResetWatchdog(); // reset the watchdog.
 	}
+
+	VGA_drawString("       ", 25, 55);
 }
 
 int main ()
