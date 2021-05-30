@@ -28,8 +28,8 @@ volatile unsigned int *key_ptr = (unsigned int *) 0xFF20005C;	// key buttons edg
 const unsigned int SCALER = 200 - 1;
 const unsigned int PERIOD = 225000000/(SCALER+1);		// 60 Hz
 const unsigned int NUM_TASKS = 5;
-const unsigned int NUM_MISSILES = 10;
-const unsigned int NUM_METEORS = 5;
+const unsigned int NUM_MISSILES = 15;
+const unsigned int NUM_METEORS = 8;
 const unsigned int COOLDOWN_TIMER = 100;
 
 typedef void (*TaskFunction) ( void );
@@ -37,8 +37,8 @@ typedef void (*TaskFunction) ( void );
 bool left, right, up, down, shootL, shootR, pause;
 
 int shipX, shipY;
-int ship_index = 2;
-int thruster_index = 0;
+int ship_index;
+int thruster_index;
 
 int bg_index;
 
@@ -46,22 +46,23 @@ int meteors[NUM_METEORS][2];
 int meteor_timer_start[NUM_METEORS];
 int meteor_timer_elapsed[NUM_METEORS];
 
-int meteor_index = 0;
+int meteor_index;
 
 int explosion_enable[NUM_METEORS];
 int explosions[NUM_METEORS][2];
 int explosion_timer[NUM_METEORS];
 
-int earth_index = 0;
+int earth_index;
 
 int missiles[NUM_MISSILES][2];
 int missile_enable[NUM_MISSILES];
-int missile_count = 0;
-int cooldown = 0;
+int missile_count;
+int cooldown;
+
+int lives, score;
 
 void init()
 {
-	int i;
 	srand(time(NULL));
 
 	PS2_setInterrupt(1);
@@ -72,6 +73,12 @@ void init()
 
 	VGA_clearDisplay();
 
+	bg_index = rand() % 9;
+}
+
+void reset()
+{
+	int i;
 	for (i = 0; i < NUM_MISSILES; i++){
 		missiles[i][0] = 10000;
 		missiles[i][1] = 10000;
@@ -91,7 +98,11 @@ void init()
 
 	shipX = (SCREEN_WIDTH - SHIP_WIDTH)/2, shipY =  (SCREEN_HEIGHT - SHIP_HEIGHT)/2;
 
-	bg_index = rand() % 9;
+	score = 0; lives = 10;
+	*LED_ptr = ~((signed int) -1 << lives);
+	DE1SoC_SevenSeg_SetSixDec(score);
+
+	ship_index = 2, meteor_index = 0, thruster_index = 0, earth_index = 0;
 }
 
 void draw_ship()
@@ -215,6 +226,9 @@ void collision()
 						VGA_drawBackground(background[bg_index], meteors[i][0], meteors[i][1], METEOR_SIZE, METEOR_SIZE);
 						VGA_drawBackground(background[bg_index], missiles[j][0], missiles[j][1], MISSILE_WIDTH, MISSILE_HEIGHT);
 
+						// increase score based on meteor speed
+						score = score + 50*(5-meteor_timer_start[i]);
+
 						explosion_enable[i] = 1;
 						explosion_timer[i] = 11;
 						explosions[i][0] = meteors[i][0];
@@ -225,8 +239,6 @@ void collision()
 						meteor_timer_start[i] = rand() % 5;
 
 						missile_enable[j] = 0;
-
-						// increase score based on meteor speed
 					}
 
 					if (missiles[j][1] + MISSILE_HEIGHT <= 0){
@@ -241,7 +253,7 @@ void collision()
 			meteors[i][1] = -1 * (rand() % 1000) - METEOR_SIZE;
 			meteor_timer_start[i] = rand() % 5;
 
-			// lose life
+			lives = lives - 1;
 		}
 
 		if((shipX + 10<= meteors[i][0] + METEOR_SIZE && shipX + SHIP_WIDTH - 10 >= meteors[i][0]) && (shipY <= meteors[i][1] + METEOR_SIZE && shipY + SHIP_WIDTH >= meteors[i][1])){
@@ -250,10 +262,11 @@ void collision()
 			meteors[i][1] = -1 * (rand() % 1000) - METEOR_SIZE;
 			meteor_timer_start[i] = rand() % 5;
 
-			// lose 3 lives
+			lives = lives - 3;
 		}
 
-//		if (!lives) { game_over = 1; }
+		*LED_ptr = ~((signed int) -1 << lives);
+		DE1SoC_SevenSeg_SetSixDec(score);
 	}
 }
 
@@ -278,11 +291,6 @@ void PS2_input()
 
 	if (scancode == 0xF023) 			{ shootR	= 0; }
 	else if ((scancode & 0xFF) == 0x23) { shootR	= 1; }
-
-	DE1SoC_SevenSeg_SetDoubleHex(0, scancode & 0xFF);
-	DE1SoC_SevenSeg_SetDoubleHex(2, (scancode & 0xFF00) >> 8);
-
-	*LED_ptr = (right) | (left<<1) | (up<<2) | (down<<3);
 }
 
 void pause_screen()
@@ -308,6 +316,8 @@ void intro()
 	const unsigned int incrPeriod [3] = {PERIOD/10, PERIOD/20, PERIOD/4};
 	int earthX = (SCREEN_WIDTH - EARTH_WIDTH)/2, earthY = SCREEN_HEIGHT - EARTH_HEIGHT/3;
 	int titleX = (SCREEN_WIDTH - TITLE_WIDTH)/2, titleY = 20;
+
+	reset();
 
 	VGA_drawBackground(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	VGA_drawSprite(background[bg_index], title, titleX, titleY, TITLE_WIDTH, TITLE_HEIGHT);
@@ -365,7 +375,7 @@ void defend_earth()
 	const unsigned int incrPeriod[NUM_TASKS] = {PERIOD/150, PERIOD/500, PERIOD/500, PERIOD/10, PERIOD/100};
 	TaskFunction taskFunctions[NUM_TASKS] = {&move_ship, &shoot_missile, &move_missiles, &animation, &move_meteors};
 
-	while (1) {  // while not game over
+	while (lives > 0) {
 		PS2_input();
 
 		pause_screen();
