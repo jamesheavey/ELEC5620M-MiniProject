@@ -25,6 +25,7 @@ const int SCREEN_HEIGHT = 240;
 volatile unsigned int *LED_ptr = (unsigned int *) 0xFF200000;	// LEDs base address
 volatile unsigned int *key_ptr = (unsigned int *) 0xFF20005C;	// key buttons edge capture base address
 
+const unsigned int FPS = 30;
 const unsigned int SCALER = 200 - 1;
 const unsigned int PERIOD = 225000000/(SCALER+1);		// 60 Hz
 const unsigned int NUM_TASKS = 5;
@@ -228,7 +229,6 @@ void display_score(int x, int y)
 
 void display_health()
 {
-	VGA_drawBackground(background[bg_index], 135, SCREEN_HEIGHT - 25, 100, 10);
 	VGA_drawSquare(0x57EA, 135, SCREEN_HEIGHT - 25, health > 0 ? health*10:0, 10);
 
 	*LED_ptr = ~((signed int) -1 << health);
@@ -276,7 +276,7 @@ void collision()
 			meteor_timer_start[i] = rand() % 5;
 
 			health = health - 1;
-			display_health();
+			VGA_drawBackground(background[bg_index], 135, SCREEN_HEIGHT - 25, 100, 10);
 		}
 
 		if((shipX + 10<= meteors[i][0] + METEOR_SIZE && shipX + SHIP_WIDTH - 10 >= meteors[i][0]) && (shipY <= meteors[i][1] + METEOR_SIZE && shipY + SHIP_WIDTH >= meteors[i][1])){
@@ -286,7 +286,7 @@ void collision()
 			meteor_timer_start[i] = rand() % 5;
 
 			health = health - 3;
-			display_health();
+			VGA_drawBackground(background[bg_index], 135, SCREEN_HEIGHT - 25, 100, 10);
 		}
 	}
 }
@@ -340,6 +340,8 @@ void intro()
 
 	reset();
 	Timer_setLoad(0xFFFFFFFF);
+
+	while (scancode) { PS2_input(); HPS_ResetWatchdog(); }
 
 	VGA_drawBackground(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	VGA_drawSprite(background[bg_index], title, titleX, titleY, TITLE_WIDTH, TITLE_HEIGHT);
@@ -416,7 +418,7 @@ void defend_earth()
 				lastIncrTime[i] -= incrPeriod[i];
 			}
 		}
-
+		display_health();
 		HPS_ResetWatchdog(); // reset the watchdog.
 	}
 
@@ -431,6 +433,7 @@ void gameover()
 	const unsigned int incrPeriod [5] = {PERIOD/10, PERIOD/50, PERIOD/4, PERIOD/50, PERIOD/80};
 	int earthX = (SCREEN_WIDTH - EARTH_WIDTH)/2, earthY = SCREEN_HEIGHT + OVER_HEIGHT + 60;
 	int overX = (SCREEN_WIDTH - OVER_WIDTH)/2, overY = SCREEN_HEIGHT + 30;
+	unsigned int score_msg[6] = {51,35,47,50,37,26};
 
 	Timer_setLoad(0xFFFFFFFF);
 
@@ -475,8 +478,10 @@ void gameover()
 	}
 
 	memset(lastIncrTime, 0, sizeof lastIncrTime);
-	VGA_drawString("SCORE:", 33, 15);
-	display_score(40,15);
+
+	VGA_drawMultiChar(score_msg, 6, 0xFFFF, (SCREEN_WIDTH - 70)/2, 20 + OVER_HEIGHT + 10, 5, 8, 1);
+	VGA_drawDec(score, 0xFFFF, (SCREEN_WIDTH - 70)/2 + 40, 20 + OVER_HEIGHT + 10, 5, 8, 1);
+
 	Timer_setLoad(0xFFFFFFFF);
 
 	while (!scancode) {
@@ -490,8 +495,6 @@ void gameover()
 	}
 
 	while (scancode) { PS2_input(); HPS_ResetWatchdog(); }
-
-	VGA_drawString("                ", 33, 15);
 
 	Timer_setLoad(0xFFFFFFFF);
 	VGA_drawBackground(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
