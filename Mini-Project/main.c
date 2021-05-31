@@ -216,12 +216,12 @@ void animation()
 
 }
 
-void display_score()
+void display_score(int x, int y)
 {
 	char str[10];
 	sprintf(str, "%d", score);
-	VGA_drawString("          ", 65, 5);
-	VGA_drawString(str, 65, 5);
+	VGA_drawString("          ", x, y);
+	VGA_drawString(str, x, y);
 
 	DE1SoC_SevenSeg_SetSixDec(score);
 }
@@ -260,7 +260,7 @@ void collision()
 
 						missile_enable[j] = 0;
 
-						display_score();
+						display_score(65, 5);
 					}
 
 					if (missiles[j][1] + MISSILE_HEIGHT <= 0){
@@ -356,6 +356,8 @@ void intro()
 		HPS_ResetWatchdog(); // reset the watchdog.
 	}
 
+	while (scancode) { PS2_input(); HPS_ResetWatchdog(); }
+
 	memset(lastIncrTime, 0, sizeof lastIncrTime);
 	VGA_drawString("                      ", 30, 15);
 	Timer_setLoad(0xFFFFFFFF);
@@ -399,7 +401,7 @@ void defend_earth()
 
 	VGA_drawString("HEALTH:", 25, 55);
 	display_health();
-	display_score();
+	display_score(65, 5);
 
 	while (health > 0) {
 		PS2_input();
@@ -419,6 +421,80 @@ void defend_earth()
 	}
 
 	VGA_drawString("       ", 25, 55);
+	VGA_drawString("       ", 65, 5);
+}
+
+void gameover()
+{
+	int i;
+	unsigned int lastIncrTime [5] = {0};
+	const unsigned int incrPeriod [5] = {PERIOD/10, PERIOD/50, PERIOD/4, PERIOD/50, PERIOD/80};
+	int earthX = (SCREEN_WIDTH - EARTH_WIDTH)/2, earthY = SCREEN_HEIGHT + OVER_HEIGHT + 60;
+	int overX = (SCREEN_WIDTH - OVER_WIDTH)/2, overY = SCREEN_HEIGHT + 30;
+
+	Timer_setLoad(0xFFFFFFFF);
+
+	VGA_drawBackground(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+	while (overY > 20) {
+		if ((lastIncrTime[0] - Timer_readValue()) >= incrPeriod[0]) {
+			animation();
+			lastIncrTime[0] -= incrPeriod[0];
+		}
+
+		if ((lastIncrTime[1] - Timer_readValue()) >= incrPeriod[1]) {
+			earthY = earthY - 1;
+			overY = overY - 1;
+			VGA_drawSprite(background[bg_index], destroyed_earth[earth_index], earthX, earthY, EARTH_WIDTH, EARTH_HEIGHT);
+			VGA_drawSprite(background[bg_index], game_over, overX, overY, OVER_WIDTH, OVER_HEIGHT);
+			lastIncrTime[1] -= incrPeriod[1];
+		}
+
+		if ((lastIncrTime[2] - Timer_readValue()) >= incrPeriod[2]) {
+			earth_index = (earth_index + 1) % 8;
+			lastIncrTime[2] -= incrPeriod[2];
+		}
+
+		if ((lastIncrTime[3] - Timer_readValue()) >= incrPeriod[3]) {
+			shipY = shipY - 1;
+			draw_ship();
+			lastIncrTime[3] -= incrPeriod[3];
+		}
+
+		if ((lastIncrTime[4] - Timer_readValue()) >= incrPeriod[4]) {
+			for (i = 0; i < NUM_METEORS; i++){
+				if(meteors[i][1] >= 0) {
+					meteors[i][1] = meteors[i][1] + 1;
+					VGA_drawSprite(background[bg_index], meteor[(meteor_index + i)%8], meteors[i][0], meteors[i][1], METEOR_SIZE, METEOR_SIZE);
+				}
+			}
+			lastIncrTime[4] -= incrPeriod[4];
+		}
+		PS2_input();
+		HPS_ResetWatchdog(); // reset the watchdog.
+	}
+
+	memset(lastIncrTime, 0, sizeof lastIncrTime);
+	VGA_drawString("SCORE:", 33, 15);
+	display_score(40,15);
+	Timer_setLoad(0xFFFFFFFF);
+
+	while (!scancode) {
+		if ((lastIncrTime[2] - Timer_readValue()) >= incrPeriod[2]) {
+			earth_index = (earth_index + 1) % 8;
+			VGA_drawSprite(background[bg_index], destroyed_earth[earth_index], earthX, earthY, EARTH_WIDTH, EARTH_HEIGHT);
+			lastIncrTime[2] -= incrPeriod[2];
+			PS2_input();
+		}
+		HPS_ResetWatchdog(); // reset the watchdog.
+	}
+
+	while (scancode) { PS2_input(); HPS_ResetWatchdog(); }
+
+	VGA_drawString("                ", 33, 15);
+
+	Timer_setLoad(0xFFFFFFFF);
+	VGA_drawBackground(background[bg_index], 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
 int main ()
@@ -427,7 +503,7 @@ int main ()
 
 	while (1) {
 		intro();
-
 		defend_earth();
+		gameover();
 	}
 }

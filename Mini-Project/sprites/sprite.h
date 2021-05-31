@@ -48,6 +48,7 @@ const int OVER_WIDTH 		= 156;
 const int OVER_HEIGHT 		= 26;
 
 extern const unsigned short earth[8][40000];
+extern const unsigned short destroyed_earth[8][40000];
 
 const int EARTH_WIDTH		= 200;
 const int EARTH_HEIGHT		= 200;
