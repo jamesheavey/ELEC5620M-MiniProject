@@ -2,7 +2,7 @@
 
 This repository contains source and header C files to that define the function of simple game called "DEFEND EARTH!". The code was designed for and implemented on the DE1-SoC board. This code requires a number of drivers for each of the utilised hardware components, including: the A9 private timer, the 6 available Seven Segment displays, PS2 decoding and the VGA. This drivers can be observed in my personal [ELEC5620 driver repository](https://github.com/leeds-embedded-systems/ELEC5620M-Student-jamesheavey). 
 
-A video demonstration of the implemented code can be seen using the link provided: [VIDEO DEMO]()
+A video demonstration of the implemented code can be seen using the link provided: [VIDEO DEMO](https://github.com/leeds-embedded-systems/ELEC5620M-MiniProject-jamesheavey/blob/4db6bb1a9969801632d071d7b26c3d22e281bcb4/Defend_Earth_Demo.mp4)
 
 ## Game Functionality
 The game designed during this project is a topdown shooter where the player must control the ship and destroy meteors as they fall vertically from off screen. The game utilises a PS2 keyboard for player control and displays all visuals via the VGA port. Upon starting the game, an introduction screen appears. The game will remain on the introduction screen until any key on the keyboard is pressed. When pressed the game transitions to the main game loop. Here player movement is controlled by keybaord arrow keys and the firing mechanism is controlled by the "A" and "D" keys. The game may be paused at anytime by pressing button 4 on the DE1SoC board. When all lives are lost, the game ends and a game over screen is displayed, indicating the total score accumulated during the session.
