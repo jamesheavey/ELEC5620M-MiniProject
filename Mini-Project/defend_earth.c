@@ -43,15 +43,15 @@ void reset()
 	// set all meteor positions to a random location above the screen display area
 	// create a timer for each to allow them to move at different speeds.
 	for (i = 0; i < NUM_METEORS; i++){
-		meteors[i][0] 			= rand() % (320 - METEOR_SIZE);
-		meteors[i][1] 			= -1 * (rand() % 1000) - METEOR_SIZE;
+		meteors[i][0] 		= rand() % (320 - METEOR_SIZE);
+		meteors[i][1] 		= -1 * (rand() % 1000) - METEOR_SIZE;
 		meteor_timer_start[i] 	= rand() % 5;
 		meteor_timer_elapsed[i] = meteor_timer_start[i];
 
 		// ensure all explosion sprites are offscreen and disabled
 		explosions[i][0] 	= 10000;
 		explosions[i][1] 	= 10000;
-		explosion_enable[i] = 0;
+		explosion_enable[i] 	= 0;
 	}
 
 	// set the ship position to the centre of the screen
@@ -152,7 +152,7 @@ void move_meteors()
 		// if individual meteor timer reaches 0, move it down 1 pixel
 		if (meteor_timer_elapsed[i] <= 0) {
 			meteor_timer_elapsed[i] = meteor_timer_start[i];
-			meteors[i][1] 			= meteors[i][1] + 1;
+			meteors[i][1] 		= meteors[i][1] + 1;
 
 			if((meteors[i][1] <= SCREEN_HEIGHT) && (meteors[i][1] >= -METEOR_SIZE)) {
 				VGA_drawSprite(background[bg_index], meteor[(meteor_index + i)%8], meteors[i][0], meteors[i][1], METEOR_SIZE, METEOR_SIZE);
@@ -241,21 +241,21 @@ void collision()
 						VGA_drawBackground(background[bg_index], missiles[j][0], missiles[j][1], MISSILE_WIDTH, MISSILE_HEIGHT);
 
 						// increase score based on meteor speed
-						score 					= score + 50*(5-meteor_timer_start[i]);
+						score 			= score + 50*(5-meteor_timer_start[i]);
 
 						// begin explosion timer and set explosion to meteor location
 						explosion_enable[i] 	= 1;
-						explosion_timer[i]		= 11;
-						explosions[i][0] 		= meteors[i][0];
-						explosions[i][1] 		= meteors[i][1];
+						explosion_timer[i]	= 11;
+						explosions[i][0] 	= meteors[i][0];
+						explosions[i][1] 	= meteors[i][1];
 
 						// re-randomise meteor params offscreen
-						meteors[i][0]			= rand() % (320 - METEOR_SIZE);
-						meteors[i][1] 			= -1 * (rand() % 1000) - METEOR_SIZE;
+						meteors[i][0]		= rand() % (320 - METEOR_SIZE);
+						meteors[i][1] 		= -1 * (rand() % 1000) - METEOR_SIZE;
 						meteor_timer_start[i]	= rand() % 5;
 
 						// disable the missile
-						missile_enable[j] 		= 0;
+						missile_enable[j] 	= 0;
 
 						// update score display
 						display_score();
@@ -271,24 +271,24 @@ void collision()
 
 		// if meteors go off screen, re-randomise parameters and reset above screen
 		if(meteors[i][1] >= SCREEN_HEIGHT){
-			meteors[i][0] 			= rand() % (320 - METEOR_SIZE);
-			meteors[i][1] 			= -1 * (rand() % 1000) - METEOR_SIZE;
+			meteors[i][0] 		= rand() % (320 - METEOR_SIZE);
+			meteors[i][1] 		= -1 * (rand() % 1000) - METEOR_SIZE;
 			meteor_timer_start[i] 	= rand() % 5;
 
 			// lose 1 health
-			health 					= health - 1;
+			health 			= health - 1;
 			VGA_drawBackground(background[bg_index], 135, SCREEN_HEIGHT - 25, 100, 10);
 		}
 
 		// if meteor collides with ship, re-randomise and reset meteor above screen
 		if((shipX + 10<= meteors[i][0] + METEOR_SIZE && shipX + SHIP_WIDTH - 10 >= meteors[i][0]) && (shipY <= meteors[i][1] + METEOR_SIZE && shipY + SHIP_WIDTH >= meteors[i][1])){
 			VGA_drawBackground(background[bg_index], meteors[i][0], meteors[i][1], METEOR_SIZE, METEOR_SIZE);
-			meteors[i][0] 			= rand() % (320 - METEOR_SIZE);
-			meteors[i][1] 			= -1 * (rand() % 1000) - METEOR_SIZE;
+			meteors[i][0] 		= rand() % (320 - METEOR_SIZE);
+			meteors[i][1] 		= -1 * (rand() % 1000) - METEOR_SIZE;
 			meteor_timer_start[i] 	= rand() % 5;
 
 			// lose 3 health
-			health 					= health - 3;
+			health 			= health - 3;
 			VGA_drawBackground(background[bg_index], 135, SCREEN_HEIGHT - 25, 100, 10);
 		}
 	}
@@ -301,28 +301,28 @@ void PS2_input()
 	scancode = PS2_readInput();
 
 	// if left arrow key is pressed, set left to 1, if released set to 0
-	if (scancode == 0xF06B) 			{ left 		= 0; }
+	if (scancode == 0xF06B) 		{ left 		= 0; }
 	else if (scancode == 0xE06B) 		{ left		= 1; }
 
 	// if right arrow key is pressed, set right to 1, if released set to 0
-	if (scancode == 0xF074) 			{ right 	= 0; }
+	if (scancode == 0xF074) 		{ right 	= 0; }
 	else if (scancode == 0xE074) 		{ right		= 1; }
 
 	// if up arrow key is pressed, set up to 1, if released set to 0
-	if (scancode == 0xF075) 			{ up 		= 0; }
+	if (scancode == 0xF075) 		{ up 		= 0; }
 	else if (scancode == 0xE075) 		{ up		= 1; }
 
 	// if down arrow key is pressed, set down to 1, if released set to 0
-	if (scancode == 0xF072) 			{ down 		= 0; }
+	if (scancode == 0xF072) 		{ down 		= 0; }
 	else if (scancode == 0xE072) 		{ down		= 1; }
 
 	// if "A" key is pressed, set shootL to 1, if released set to 0
-	if (scancode == 0xF01C) 			{ shootL	= 0; }
-	else if ((scancode & 0xFF) == 0x1C) { shootL 	= 1; }
+	if (scancode == 0xF01C) 		{ shootL	= 0; }
+	else if ((scancode & 0xFF) == 0x1C) 	{ shootL 	= 1; }
 
 	// if "D" key is pressed, set shootR to 1, if released set to 0
-	if (scancode == 0xF023) 			{ shootR	= 0; }
-	else if ((scancode & 0xFF) == 0x23) { shootR	= 1; }
+	if (scancode == 0xF023) 		{ shootR	= 0; }
+	else if ((scancode & 0xFF) == 0x23) 	{ shootR	= 1; }
 }
 
 // Function to pause the game
@@ -463,7 +463,7 @@ void gameover()
 	int i;
 	unsigned int lastIncrTime [5] 		= {0};
 	const unsigned int incrPeriod [5]	= {PERIOD/10, PERIOD/50, PERIOD/4, PERIOD/50, PERIOD/150};
-	unsigned int score_msg[6] 			= {51,35,47,50,37,26};
+	unsigned int score_msg[6] 		= {51,35,47,50,37,26};
 
 	int earthX = (SCREEN_WIDTH - EARTH_WIDTH)/2, earthY = SCREEN_HEIGHT + OVER_HEIGHT + 60;
 	int overX = (SCREEN_WIDTH - OVER_WIDTH)/2, overY = SCREEN_HEIGHT + 30;
