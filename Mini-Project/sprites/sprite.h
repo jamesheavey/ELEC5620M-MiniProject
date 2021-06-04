@@ -23,11 +23,6 @@ const int THRUSTER_HEIGHT	= 14;
 const int THRUSTER_Y 		= 44;
 const int THRUSTER_OFS[5]	= {3,5,7,6,6};
 
-extern const unsigned short laser[105];
-
-const int LASER_WIDTH 		= 7;
-const int LASER_HEIGHT 		= 15;
-
 extern const unsigned short missile[360];
 
 const int MISSILE_WIDTH 	= 12;
